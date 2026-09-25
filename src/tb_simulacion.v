@@ -47,14 +47,12 @@ module tb_simulacion();
         #10;
         btn[5] = 0;           // Soltamos el botón
         #20;
-        // Aquí deberías ver en GTKWave que "led" (suma) se vuelve 8 (1000)
 
         // ----------------------------------------------------
         // PRUEBA 2: Restar 5 - 3
         // ----------------------------------------------------
         btn[4] = 1;           // Activamos modo Resta
         #30;
-        // Aquí deberías ver que "led" baja a 2 (0010)
 
         // ----------------------------------------------------
         // PRUEBA 3: Ver comportamiento de compuertas lógicas

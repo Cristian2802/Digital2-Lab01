@@ -52,7 +52,7 @@ Durante la simulación en GTKWave se monitorearon las siguientes señales:
 
 Tal y como se visualiza en la siguiente imagen:
 
-![Simulación Ejercicio 1](doc/GTKWaveGeneral.png)
+![Visualización señales en GTKWave](doc/GTKWave General.png)
 
 #### Resultados obtenidos
 

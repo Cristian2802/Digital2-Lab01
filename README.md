@@ -17,6 +17,7 @@
 - [Diseño implementado](#diseño-implementado)
 - [Simulaciones](#simulaciones)
 - [Implementación](#implementación)
+- [Resultados](#implementación)
 - [Conclusiones](#conclusiones)
 - [Referencias](#referencias)
 
@@ -30,6 +31,11 @@ Incluya:
 - Tipo de sistema (FSM, FSM + datapath).
 - Estados definidos.
 - Funcionamiento general del sistema.
+
+- Descripción clara del diseño.
+Explicación de:
+Cómo se construyen los operandos.
+Qué muestra cada LED.
 
 Cuando aplique, incluya el diagrama de la máquina de estados.
 
@@ -121,6 +127,14 @@ Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 ---
 
 ## Resultados
+
+### Smoke Test:
+
+Para la evidencia del Smoke test, se muestra un video con el funcionamiento del semáforo con el archivo que fue proporcionado por el docente, esto sirvió para comprobar el funcionamiento de la FPGA y fue base para la explicación de como programar la misma con el aplicativo de *Vivado*.
+
+#### Evidencia Smoke test:
+![Evidencia Smoke test](doc/Smoke_test.mp4)
+  
 
 **Visualización botones, switches y leds en la FPGA:**
 

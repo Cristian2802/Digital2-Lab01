@@ -135,29 +135,73 @@ Para la evidencia del Smoke test, se muestra un video con el funcionamiento del 
 #### Evidencia Smoke test:
 ![Evidencia Smoke test](doc/Smoke_test.mp4)
   
+### Limitaciones Arquitectónicas de la Placa Zybo Z7: Problemas con los Botones 4 y 5 (Botones MIO50 y MIO51)
+
+Al implementar el diseño físico en la tarjeta Zybo Z7, surgió una restricción importante relacionada con el uso de botones adicionales (específicamente aquellos referenciados como Botón 4 y Botón 5). Esta limitación no fue un  error de código, sino una característica estricta de la arquitectura del chip Zynq-7000.
+
+#### Arquitectura SoC Zynq-7000 (PL vs. PS)
+El "cerebro" de la tarjeta Zybo Z7 es un *System-on-Chip* (SoC) que integra dos subsistemas completamente distintos dentro del mismo empaquetado:
+1.  **PL (Programmable Logic):** Es la FPGA tradicional. Es el área donde se implementan los circuitos diseñados en Verilog (hardware puro).
+2.  **PS (Processing System):** Es un procesador ARM Cortex-A9 interno (software).
+
+#### El Problema de Enrutamiento con los Pines MIO
+En la placa Zybo Z7, los botones estándar (`BTN0`, `BTN1`, `BTN2` y `BTN3`) están soldados y enrutados físicamente a los pines de la FPGA (zona **PL**). Esto permite asignarlos directamente en el archivo de restricciones (`.xdc`) y leerlos en tiempo real con código Verilog.
+
+Sin embargo, los botones o interfaces referenciados en los esquemáticos como conectados a **MIO50** y **MIO51** pertenecen a la red de *Multiplexed I/O* (Entradas/Salidas Multiplexadas). Estos pines le pertenecen exclusivamente al procesador ARM (zona PS). La FPGA (zona PL) no tiene una conexión física de hardware directo hacia ellos. Por este motivo, estos botones no funcionaban y se tuvo que optar por utilizar botones externos que los reemplazaran.
+
+#### Implicaciones para el Diseño en Verilog
+Al intentar asignar una variable de Verilog (como `btn[4]` o `btn[5]`) a los pines físicos MIO50 o MIO51 en el archivo `.xdc`, la herramienta de síntesis (Vivado) arrojará un error de mapeo, ya que el diseño RTL es "ciego" a los pines del procesador. 
+
+Es así como después de ese error, se modificó una parte del archivo de restricciones (`.xdc`).
 
 **Visualización botones, switches y leds en la FPGA:**
 
+Para corroborar los resultados de la simulación, se implementó el diseño en la placa física. En la siguiente imagen se detalla la asignación de los componentes físicos (botones, interruptores y LEDs) utilizados durante la prueba:
+
+*   **Recuadro Rosado:** Botones (`btn[3:0]`) que permiten ingresar el valor del operando $B$.
+*   **Recuadro Naranja:** Interruptores (`sw[3:0]`) que asignan el valor directo al operando $A$.
+*   **Recuadro Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
+*   **Recuadro Inferior (Botón individual):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
+*   **Recuadro Rojo (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
+*   **LED RGB:** Ubicado a la derecha de los LEDs verdes, funciona como indicador de estado lógico.
+
 ![Visualización botones, switches y leds en la FPGA](doc/Explicación.png)
 
-**Registro:**
+A continuación, se describen los eventos ocurridos durante los distintos casos de prueba en hardware:
+
+#### 1. Registro Pequeño y Generación de Cyan
+En este primer evento, se probó el guardado de un valor pequeño. Se ingresó el valor de 1 en los botones y se registró presionando `btn[5]`, asignando $B=1$ (`0001`), mientras los interruptores se mantuvieron en $A=0$ (`0000`). Como resultado aritmético, el LED verde menos significativo se encendió mostrando la suma ($0+1=1$). 
+
+Adicionalmente, el indicador RGB mostró un tono predominantemente azulado claro. Este es un evento matemáticamente correcto que corresponde al color **Cyan** (Verde + Azul), cuyo desglose lógico es el siguiente:
+*   **Canal Rojo (AND):** Requiere que $A$ y $B$ tengan un '1' en la misma posición. Como $A$ es todo ceros, no hay coincidencia posible (`0000 & 0001 = 0000`). **Rojo apagado.**
+*   **Canal Verde (OR):** Requiere al menos un '1' en el sistema. El operando $B$ aporta este uno lógico (`0000 | 0001 = 0001`). **Verde encendido.**
+*   **Canal Azul (XOR):** Requiere una diferencia entre los bits de $A$ y $B$. En la primera posición, difieren (`0` y `1`), activando la compuerta (`0000 ^ 0001 = 0001`). **Azul encendido.**
 
 ![Registro](doc/Registro.jpeg)
 
-**Registro Grande:**
+#### 2. Registro Grande
+Por otro lado, en esta imagen se visualizan los 4 LEDs verdes encendidos después de guardar. Es decir, después de presionar el `btn[5]` para asignar el valor de $B=15$ (`1111`) y manteniendo $A=0$. Por lo tanto, el resultado de la suma es igual a 15, lo que enciende todos los LEDs de resultado. 
+
+En este caso, el LED RGB vuelve a mostrar color **Cyan**. La razón es idéntica al caso anterior: al ser $A=0$, es imposible que compartan bits (AND = 0, Rojo apagado), pero la presencia de los '1's lógicos de $B$ activa la compuerta OR (Verde) y sus diferencias frente a los ceros de $A$ activan la compuerta XOR (Azul).
 
 ![Registro Grande](doc/Registro_Grande.jpeg)
 
-**Suma:**
+#### 3. Operandos Iguales ($A=1, B=1$)
+En este evento, se asignó el valor de 1 tanto al operando $A$ (vía interruptor) como al operando $B$ (vía registro). El resultado aritmético encendió el segundo LED verde, indicando una suma igual a 2 (`0010`). En cuanto al LED RGB, este mostró una mezcla de **Rojo y Verde** (Amarillo). Esto ocurre porque ambos operandos comparten exactamente el mismo bit (AND = 1, Rojo encendido) y aportan presencia lógica (OR = 1, Verde encendido), pero al ser idénticos no existen diferencias entre ellos (XOR = 0, Azul apagado).
 
 ![Suma](doc/Suma.jpeg)
 
+#### 4. Operación de Suma ($A=2, B=1$)
+Para esta prueba, se cambió el operando de los interruptores a $A=2$ (`0010`) manteniendo $B=1$ (`0001`). Los dos LEDs verdes menos significativos se encendieron, indicando el resultado esperado de 3 (`0011`). El LED RGB volvió a mostrar **Cyan**, ya que los operandos tienen bits activos pero en diferentes posiciones, lo que activa el Verde (OR) y el Azul (XOR), pero deja el Rojo (AND) apagado al no haber coincidencias.
+
 ![Suma_2](doc/Suma2.jpeg)
 
-**Resta:**
+#### 5. Operación de Resta ($A=2, B=1$)
+Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), se mantuvo presionado el botón rojo `btn[4]` para cambiar el modo de la ALU a resta. El resultado aritmético cambió instantáneamente para mostrar la resta matemática ($2 - 1 = 1$), encendiendo únicamente el primer LED verde. Cabe destacar que el indicador RGB se mantuvo en **Cyan**, demostrando físicamente que las compuertas lógicas operan en paralelo y evalúan los operandos de entrada independientemente de si la operación seleccionada es suma o resta.
 
 ![Resta](doc/Resta.jpeg)
 
+---
 
 ## Conclusiones
 

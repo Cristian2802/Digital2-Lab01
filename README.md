@@ -207,10 +207,15 @@ Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), 
 
 ## Conclusiones
 
-- Principales aprendizajes del laboratorio.
-- Dificultades encontradas.
-- Importancia de la simulación en el diseño digital.
+- A través de esta práctica se logró comprender el flujo de trabajo en *Vivado* para diseñar e implementar circuitos en la FPGA *Zybo Z7*. El circuito desarrollado permitió comprobar el funcionamiento de los interruptores, botones y LEDs de la tarjeta. Este código será útil en futuros laboratorios para verificar que los componentes funcionen correctamente antes de realizar diseños más complejos.
 
+- Se identificó una limitación de la arquitectura Zynq-7000: no todos los botones de la tarjeta se pueden utilizar directamente en diseños de hardware en Verilog. Para esta práctica, se utilizaron los 4 interruptores (`SW0-SW3`) y los botones `BTN0-BTN3`, que están conectados a la Lógica Programable (PL). Para agregar más entradas, se pueden utilizar los puertos de expansión PMOD o cambiar las funciones de los interruptores disponibles. Esto debido a que los botones `BTN4 y BTN5` están asociados exclusivamente al procesador.
+
+- La simulación con *GTKWave* fue de gran ayuda para comprobar el comportamiento de las señales antes de implementar el diseño en la FPGA. Esto permitió detectar posibles errores y verificar que las operaciones funcionaran como se esperaba, facilitando las pruebas posteriores en la tarjeta física. Reduciendo los tiempos para hacer pruebas repetitivas y redundantes.
+
+- Durante la práctica se comprendió que, a diferencia de un programa convencional, en Verilog varias operaciones pueden ejecutarse al mismo tiempo. Se comprobó que las operaciones de suma y resta y la lógica que controla los LEDs RGB funcionan de manera simultánea, sin que una interfiera con la otra.
+
+- La implementación del indicador RGB permitió comprender mejor la diferencia entre las operaciones aritméticas y las operaciones lógicas. Mediante compuertas como AND, OR y XOR, se pudo utilizar la información de varios bits para controlar un solo color del LED. Esto permitió aprender cómo representar condiciones lógicas mediante indicadores visuales en un circuito digital.
 ---
 
 ## Referencias

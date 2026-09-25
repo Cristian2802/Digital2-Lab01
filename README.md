@@ -37,8 +37,6 @@ Cuando aplique, incluya el diagrama de la máquina de estados.
 
 ## Simulaciones
 
-Describa las simulaciones realizadas para verificar el funcionamiento del diseño.
-
 ### Verificación y Simulación del Diseño
 
 #### Descripción del testbench
@@ -52,8 +50,13 @@ Durante la simulación en GTKWave se monitorearon las siguientes señales:
 ***Entradas:*** `clk` (señal de reloj), `sw[3:0]` (operando A de entrada directa) y `btn[5:0]` (incluye el operando B a registrar, el selector de suma/resta y el botón de guardado).
 ***Salidas:*** `led[3:0]` (resultado binario de la operación aritmética) y `rgb_led[2:0]` (indicador de estado lógico de las compuertas AND, OR y XOR).
 
+Tal y como se visualiza en la siguiente imagen:
+
+![Simulación Ejercicio 1](doc/GTKWaveGeneral.png)
+
 #### Resultados obtenidos
 
+Para la explicación de la 
 Las formas de onda resultantes confirmaron el funcionamiento esperado del circuito, dividiéndose en dos etapas de validación:
 
 #### A. Validación Aritmética (Señal `led`):

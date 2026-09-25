@@ -150,20 +150,22 @@ En la placa Zybo Z7, los botones estándar (`BTN0`, `BTN1`, `BTN2` y `BTN3`) est
 Sin embargo, los botones o interfaces referenciados en los esquemáticos como conectados a **MIO50** y **MIO51** pertenecen a la red de *Multiplexed I/O* (Entradas/Salidas Multiplexadas). Estos pines le pertenecen exclusivamente al procesador ARM (zona PS). La FPGA (zona PL) no tiene una conexión física de hardware directo hacia ellos. Por este motivo, estos botones no funcionaban y se tuvo que optar por utilizar botones externos que los reemplazaran.
 
 #### Implicaciones para el Diseño en Verilog
-Al intentar asignar una variable de Verilog (como `btn[4]` o `btn[5]`) a los pines físicos MIO50 o MIO51 en el archivo `.xdc`, la herramienta de síntesis (Vivado) arrojará un error de mapeo, ya que el diseño RTL es "ciego" a los pines del procesador. 
+Al intentar asignar una variable de Verilog (como `btn[4]` o `btn[5]`) a los pines físicos MIO50 o MIO51 en el archivo `.xdc`, la herramienta de síntesis (Vivado) arrojaba un error de mapeo, ya que el diseño RTL es "ciego" a los pines del procesador. 
 
 Es así como después de ese error, se modificó una parte del archivo de restricciones (`.xdc`).
 
 **Visualización botones, switches y leds en la FPGA:**
 
-Para corroborar los resultados de la simulación, se implementó el diseño en la placa física. En la siguiente imagen se detalla la asignación de los componentes físicos (botones, interruptores y LEDs) utilizados durante la prueba:
+Para corroborar los resultados de la simulación, se implementó el diseño en la FPGA. En la siguiente imagen se detalla la asignación de los componentes físicos (botones, interruptores y LEDs) utilizados durante la prueba:
 
-*   **Recuadro Rosado:** Botones (`btn[3:0]`) que permiten ingresar el valor del operando $B$.
 *   **Recuadro Naranja:** Interruptores (`sw[3:0]`) que asignan el valor directo al operando $A$.
-*   **Recuadro Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
-*   **Recuadro Inferior (Botón individual):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
-*   **Recuadro Rojo (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
-*   **LED RGB:** Ubicado a la derecha de los LEDs verdes, funciona como indicador de estado lógico.
+*   **Recuadro Rosado:** Botones (`btn[3:0]`) que permiten ingresar el valor del operando $B$.
+*   **Círculo Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
+*   **Círculo Morado (Botón):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
+*   **Recuadro Celeste (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
+*   **Círculo Amarillo (LED RGB):** Es el `RGB_Led[2:0]`, funciona como indicador de estado lógico.
+*   **Círculo Verde:** Botones del procesador ARM (zona PS).
+
 
 ![Visualización botones, switches y leds en la FPGA](doc/Explicación.png)
 

@@ -60,7 +60,7 @@ Tal y como se visualiza en la siguiente imagen:
 
 Para la explicación de los resultados obtenidos del `tb_simulacion.v`, en la siguiente imagen se visualiza la simulación en GTKWave dividida en 14 zonas diferentes. Esto facilita la explicación y hace evidente cómo cambian las señales con cada una de las pruebas realizadas, todo ello con la finalidad de probar el correcto funcionamiento de la FPGA Zybo-Z7-10.
 
-![Visualización señales en GTKWave](doc/GTKWave_Divisiones.png)
+![Visualización señales en GTKWave mediante divisiones](doc/GTKWave_Divisiones.png)
 
 A continuación, se detalla el comportamiento del circuito en cada zona temporal de la simulación:
 
@@ -121,6 +121,29 @@ Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 ---
 
 ## Resultados
+
+**Visualización botones, switches y leds en la FPGA:**
+
+![Visualización botones, switches y leds en la FPGA](doc/Explicación.png)
+
+**Registro:**
+
+![Registro](doc/Registro.jpeg)
+
+**Registro Grande:**
+
+![Registro Grande](doc/Registro_Grande.jpeg)
+
+**Suma:**
+
+![Suma](doc/Suma.jpeg)
+
+![Suma_2](doc/Suma2.jpeg)
+
+**Resta:**
+
+![Resta](doc/Resta.jpeg)
+
 
 ## Conclusiones
 

@@ -4,7 +4,7 @@
 ---
 
 ## Integrantes  
-- Julian David Gomez Gonzalez
+- Julian David Gomez Gonzalez - 1007544331
 - Cristian Norbey Hernández Gualteros - 1001091723
 - Milton Nicolas Rincón Caicedo
 
@@ -18,26 +18,135 @@
 - [Simulaciones](#simulaciones)
 - [Implementación](#implementación)
 - [Resultados](#implementación)
-- [Conclusiones](#conclusiones)
+- [Conclusiones](#conclusiones) 
 - [Referencias](#referencias)
 
 ---
 
 ## Diseño implementado
 
-Describa brevemente los diseños realizados en el laboratorio.
+## Diseño implementado
 
-Incluya:
-- Tipo de sistema (FSM, FSM + datapath).
-- Estados definidos.
-- Funcionamiento general del sistema.
+### 1. Tipo de Sistema y Arquitectura General
+El diseño corresponde a una **arquitectura de Datapath Secuencial con Registro de Carga Habilitada acoplado a una Unidad Lógico-Aritmética (ALU) Combinacional Paralela**. No requiere una Máquina de Estados Finitos (FSM) multi-estado, ya que el control del flujo se realiza mediante una celda de memoria síncrona (registro de captura con señal de *Enable*) y rutas de datos combinacionales concurrentes.
 
-- Descripción clara del diseño.
-Explicación de:
-Cómo se construyen los operandos.
-Qué muestra cada LED.
+El sistema se divide en dos etapas principales:
+1. **Etapa de Adquisición y Almacenamiento (Secuencial):** Sincronizada a un reloj maestro de 125 MHz (`sys_clk_pin`), encargada de capturar y retener el valor del operando $B$ cuando el usuario activa la señal de escritura (`btn[5]`).
+2. **Etapa de Procesamiento Lógico-Aritmético (Combinacional):** Procesa en paralelo el operando directo $A$ y el operando almacenado $B$, ejecutando simultáneamente una operación aritmética de 4 bits (suma o resta seleccionable) y tres operaciones booleanas bit a bit (AND, OR, XOR).
 
-Cuando aplique, incluya el diagrama de la máquina de estados.
+```mermaid
+graph LR
+    %% Entradas
+    subgraph Entradas
+        SW["sw[3:0]<br/>(Switches)"]
+        BTN_D["btn[3:0]<br/>(Botones B)"]
+        BTN_SAVE["btn[5]<br/>(PMOD JC.2 / Guardar)"]
+        CLK["clk<br/>(125 MHz)"]
+        BTN_MODE["btn[4]<br/>(PMOD JC.1 / Suma-Resta)"]
+    end
+
+    %% Registro
+    subgraph Memoria
+        B_REG["Registro B_reg [3:0]<br/>(Captura síncrona)"]
+    end
+
+    %% ALU
+    subgraph ALU ["ALU Paralela"]
+        ARITH["Módulo Aritmético<br/>(A + B) / (A - B)"]
+        LOGIC["Módulo Lógico<br/>AND, OR, XOR<br/>+ Reducción OR"]
+    end
+
+    %% Salidas
+    subgraph Salidas
+        LED["led[3:0]<br/>(4 LEDs Verdes)"]
+        RGB["rgb_led[2:0]<br/>(LED RGB LD6)"]
+    end
+
+    %% Conexiones Operando A
+    SW -->|Operando A| ARITH
+    SW -->|Operando A| LOGIC
+
+    %% Conexiones Operando B
+    BTN_D -->|Dato D| B_REG
+    BTN_SAVE -->|Write Enable| B_REG
+    CLK -->|Reloj| B_REG
+    B_REG -->|Operando B| ARITH
+    B_REG -->|Operando B| LOGIC
+
+    %% Control
+    BTN_MODE -->|0: Suma / 1: Resta| ARITH
+
+    %% Salidas
+    ARITH -->|Resultado Aritmético| LED
+    LOGIC -->|R=AND, G=OR, B=XOR| RGB
+```
+
+
+### 2. Construcción y Manejo de Operandos
+
+Para garantizar un diseño no trivial y evaluar la totalidad de los 10 periféricos de entrada disponibles en la Zybo Z7, los operandos de 4 bits se forman mediante dos mecanismos complementarios:
+
+* **Operando $A$ (Entrada Directa / Asíncrona):**
+  $$A[3:0] = \{ \text{SW}_3, \text{SW}_2, \text{SW}_1, \text{SW}_0 \}$$
+  Se mapea directamente a los interruptores deslizantes (`sw[3:0]`). Cualquier cambio físico en los switches se refleja de manera inmediata en la ALU combinacional sin depender del reloj del sistema.
+
+* **Operando $B$ (Entrada Registrada / Síncrona):**
+  $$B[3:0] = \text{B\_reg}[3:0] \quad \text{donde} \quad \text{B\_reg} \leftarrow \{ \text{BTN}_3, \text{BTN}_2, \text{BTN}_1, \text{BTN}_0 \} \quad \text{si } \text{btn}[5] = 1$$
+  Los botones físicos de la placa (`btn[3:0]`) permiten seleccionar el dato temporal para $B$. Para evitar que el valor se pierda al soltar los pulsadores, se implementó un registro síncrono de 4 bits (`B_reg`). El dato se almacena en memoria únicamente cuando ocurre un flanco de subida de `clk` y se presiona el botón externo `btn[5]` (PMOD JC, Pin 2), actuando como señal de *Write Enable*.
+
+---
+
+### 3. Operaciones Aritméticas y Control (LEDs Verdes)
+
+La unidad aritmética calcula la suma o la resta en complemento a dos truncada a 4 bits según el estado de la línea de control `btn[4]` (PMOD JC, Pin 1):
+
+$$\text{SUM\_result} = \begin{cases} A + B_{\text{reg}}, & \text{si } \text{btn}[4] = 0 \text{ (Modo Suma)} \\ A - B_{\text{reg}}, & \text{si } \text{btn}[4] = 1 \text{ (Modo Resta)} \end{cases}$$
+
+El resultado binario de 4 bits se asigna continuamente a los 4 LEDs verdes de la tarjeta (`led[3:0]`):
+* `led[0]` (LD0): Bit menos significativo (LSB, posición $2^0$).
+* `led[1]` (LD1): Bit posición $2^1$.
+* `led[2]` (LD2): Bit posición $2^2$.
+* `led[3]` (LD3): Bit más significativo (MSB, posición $2^3$).
+
+---
+
+### 4. Operaciones Lógicas y Visualización en LED RGB
+
+En paralelo a la operación aritmética, el módulo computa tres operaciones booleanas bit a bit entre los operandos de 4 bits:
+$$\text{AND\_result} = A \ \& \ B_{\text{reg}}$$
+$$\text{OR\_result} = A \ | \ B_{\text{reg}}$$
+$$\text{XOR\_result} = A \ \oplus \ B_{\text{reg}}$$
+
+Para condensar cada bus de 4 bits en un indicador de 1 bit para cada canal del LED RGB (`LD6`), se aplican **operadores de reducción unarios (`|`)**, los cuales equivalen a una compuerta OR extendida a lo largo de los 4 bits de cada vector:
+
+$$\text{rgb\_led}[2] \ (\text{Canal Rojo}) = |\text{AND\_result} = \text{AND}[3] \lor \text{AND}[2] \lor \text{AND}[1] \lor \text{AND}[0]$$
+$$\text{rgb\_led}[1] \ (\text{Canal Verde}) = |\text{OR\_result} = \text{OR}[3] \lor \text{OR}[2] \lor \text{OR}[1] \lor \text{OR}[0]$$
+$$\text{rgb\_led}[0] \ (\text{Canal Azul}) = |\text{XOR\_result} = \text{XOR}[3] \lor \text{XOR}[2] \lor \text{XOR}[1] \lor \text{XOR}[0]$$
+
+#### Matriz de Comportamiento del LED RGB:
+| Condición Lógica | R (AND) | G (OR) | B (XOR) | Color Resultante | Interpretación Física |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| $A=0 \land B=0$ | 0 | 0 | 0 | **Apagado** | No hay ningún bit activo en el sistema. |
+| $A \neq B \land (A \ \& \ B = 0)$ | 0 | 1 | 1 | **Cyan** | Existen bits en '1' pero en posiciones distintas (presencia y diferencia, sin coincidencia). |
+| $A = B \land (A, B \neq 0)$ | 1 | 1 | 0 | **Amarillo** | Ambos operandos son idénticos y no nulos (coincidencia total, sin diferencia). |
+| $A \neq B \land (A \ \& \ B \neq 0)$ | 1 | 1 | 1 | **Blanco** | Coinciden en al menos un bit y difieren en otro (se activan todas las compuertas). |
+
+*Restricción matemática:* Debido a la relación booleana $A \lor B = (A \land B) \lor (A \oplus B)$, la activación de la compuerta AND o de la compuerta XOR fuerza de manera obligatoria la activación de la compuerta OR. Por esta razón, el canal Verde siempre acompaña al Rojo o al Azul, haciendo físicamente imposible obtener Rojo o Azul puro de forma aislada.
+
+---
+
+### 5. Resumen de Mapeo de Entradas y Salidas
+| Identificador HDL | Periférico Físico | Pin Zybo Z7 | Estándar I/O | Descripción Funcional |
+| :--- | :--- | :---: | :---: | :--- |
+| `clk` | Oscilador interno | K17 | LVCMOS33 | Reloj maestro del sistema (125 MHz, 8.00 ns). |
+| `sw[0]` .. `sw[3]` | Switches SW0 a SW3 | G15, P15, W13, T16 | LVCMOS33 | Bits $A[0]$ a $A[3]$ de lectura directa. |
+| `btn[0]` .. `btn[3]` | Botones BTN0 a BTN3 | K18, P16, K19, Y16 | LVCMOS33 | Bits de datos temporales para almacenar en $B$. |
+| `btn[4]` | Botón externo (PMOD JC.1) | V15 | LVCMOS33 (Pulldown) | Selector aritmético: 0 = Suma, 1 = Resta. |
+| `btn[5]` | Botón externo (PMOD JC.2) | W15 | LVCMOS33 (Pulldown) | Enable de captura síncrona para $B_{\text{reg}}$. |
+| `led[0]` .. `led[3]` | LEDs verdes LD0 a LD3 | M14, M15, G14, D18 | LVCMOS33 | Visualización del resultado aritmético (4 bits). |
+| `rgb_led[2]` | LED RGB 6 (Rojo) | V16 | LVCMOS33 | Indicador de coincidencia booleana (`|AND`). |
+| `rgb_led[1]` | LED RGB 6 (Verde) | F17 | LVCMOS33 | Indicador de presencia booleana (`|OR`). |
+| `rgb_led[0]` | LED RGB 6 (Azul) | M17 | LVCMOS33 | Indicador de diferencia booleana (`|XOR`). |
 
 ---
 

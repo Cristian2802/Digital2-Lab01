@@ -6,7 +6,7 @@
 ## Integrantes  
 - Julian David Gomez Gonzalez - 1007544331
 - Cristian Norbey Hernández Gualteros - 1001091723
-- Milton Nicolas Rincón Caicedo
+- Milton Nicolas Rincón Caicedo - 1021312724
 
 **Grupo de trabajo:**  
 **Semestre:** 2026-1

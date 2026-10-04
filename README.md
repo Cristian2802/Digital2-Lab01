@@ -16,14 +16,12 @@
 ## Índice
 - [Diseño implementado](#diseño-implementado)
 - [Simulaciones](#simulaciones)
-- [Implementación](#implementación)
-- [Resultados](#implementación)
-- [Conclusiones](#conclusiones) 
+- [Implementación del Diseño en Verilog](#implementación-del-diseño-en-verilog)
+- [Resultados](#resultados)
+- [Conclusiones](#conclusiones)
 - [Referencias](#referencias)
 
 ---
-
-## Diseño implementado
 
 ## Diseño implementado
 
@@ -90,9 +88,15 @@ Para garantizar un diseño no trivial y evaluar la totalidad de los 10 periféri
   $$A[3:0] = \{ \text{SW}_3, \text{SW}_2, \text{SW}_1, \text{SW}_0 \}$$
   Se mapea directamente a los interruptores deslizantes (`sw[3:0]`). Cualquier cambio físico en los switches se refleja de manera inmediata en la ALU combinacional sin depender del reloj del sistema.
 
-* **Operando $B$ (Entrada Registrada / Síncrona):**
-  $$B[3:0] = \text{B\_reg}[3:0] \quad \text{donde} \quad \text{B\_reg} \leftarrow \{ \text{BTN}_3, \text{BTN}_2, \text{BTN}_1, \text{BTN}_0 \} \quad \text{si } \text{btn}[5] = 1$$
-  Los botones físicos de la placa (`btn[3:0]`) permiten seleccionar el dato temporal para $B$. Para evitar que el valor se pierda al soltar los pulsadores, se implementó un registro síncrono de 4 bits (`B_reg`). El dato se almacena en memoria únicamente cuando ocurre un flanco de subida de `clk` y se presiona el botón externo `btn[5]` (PMOD JC, Pin 2), actuando como señal de *Write Enable*.
+* **Operando B (Entrada Registrada / Síncrona):**
+  `B[3:0] = B_reg[3:0]`  
+  Los botones físicos de la placa (`btn[3:0]`) permiten seleccionar el dato temporal para $B$. Para evitar que el valor se pierda al soltar los pulsadores, se implementó un registro síncrono de 4 bits (`B_reg`). El dato se almacena en memoria únicamente cuando ocurre un flanco de subida de `clk` y se presiona el botón externo `btn[5]` (PMOD JC, Pin 2), actuando como señal de *Write Enable*:
+  ```verilog
+  always @(posedge clk) begin
+      if (btn[5]) begin
+          B_reg <= btn[3:0];
+      end
+  end
 
 ---
 
@@ -100,7 +104,12 @@ Para garantizar un diseño no trivial y evaluar la totalidad de los 10 periféri
 
 La unidad aritmética calcula la suma o la resta en complemento a dos truncada a 4 bits según el estado de la línea de control `btn[4]` (PMOD JC, Pin 1):
 
-$$\text{SUM\_result} = \begin{cases} A + B_{\text{reg}}, & \text{si } \text{btn}[4] = 0 \text{ (Modo Suma)} \\ A - B_{\text{reg}}, & \text{si } \text{btn}[4] = 1 \text{ (Modo Resta)} \end{cases}$$
+$$
+\mathrm{SUM\_result} = \begin{cases} 
+A + B_{\mathrm{reg}}, & \text{si } \mathrm{btn}[4] = 0 \text{ (Modo Suma)} \\ 
+A - B_{\mathrm{reg}}, & \text{si } \mathrm{btn}[4] = 1 \text{ (Modo Resta)} 
+\end{cases}
+$$
 
 El resultado binario de 4 bits se asigna continuamente a los 4 LEDs verdes de la tarjeta (`led[3:0]`):
 * `led[0]` (LD0): Bit menos significativo (LSB, posición $2^0$).
@@ -113,25 +122,34 @@ El resultado binario de 4 bits se asigna continuamente a los 4 LEDs verdes de la
 ### 4. Operaciones Lógicas y Visualización en LED RGB
 
 En paralelo a la operación aritmética, el módulo computa tres operaciones booleanas bit a bit entre los operandos de 4 bits:
-$$\text{AND\_result} = A \ \& \ B_{\text{reg}}$$
-$$\text{OR\_result} = A \ | \ B_{\text{reg}}$$
-$$\text{XOR\_result} = A \ \oplus \ B_{\text{reg}}$$
+
+$$
+\begin{aligned}
+\mathrm{AND\_result} &= A \land B_{\mathrm{reg}} \\
+\mathrm{OR\_result}  &= A \lor B_{\mathrm{reg}} \\
+\mathrm{XOR\_result} &= A \oplus B_{\mathrm{reg}}
+\end{aligned}
+$$
 
 Para condensar cada bus de 4 bits en un indicador de 1 bit para cada canal del LED RGB (`LD6`), se aplican **operadores de reducción unarios (`|`)**, los cuales equivalen a una compuerta OR extendida a lo largo de los 4 bits de cada vector:
 
-$$\text{rgb\_led}[2] \ (\text{Canal Rojo}) = |\text{AND\_result} = \text{AND}[3] \lor \text{AND}[2] \lor \text{AND}[1] \lor \text{AND}[0]$$
-$$\text{rgb\_led}[1] \ (\text{Canal Verde}) = |\text{OR\_result} = \text{OR}[3] \lor \text{OR}[2] \lor \text{OR}[1] \lor \text{OR}[0]$$
-$$\text{rgb\_led}[0] \ (\text{Canal Azul}) = |\text{XOR\_result} = \text{XOR}[3] \lor \text{XOR}[2] \lor \text{XOR}[1] \lor \text{XOR}[0]$$
+$$
+\begin{aligned}
+\mathrm{rgb\_led}[2] \ (\text{Rojo})  &= |\mathrm{AND\_result} = \mathrm{AND}[3] \lor \mathrm{AND}[2] \lor \mathrm{AND}[1] \lor \mathrm{AND}[0] \\
+\mathrm{rgb\_led}[1] \ (\text{Verde}) &= |\mathrm{OR\_result}  = \mathrm{OR}[3] \lor \mathrm{OR}[2] \lor \mathrm{OR}[1] \lor \mathrm{OR}[0] \\
+\mathrm{rgb\_led}[0] \ (\text{Azul})  &= |\mathrm{XOR\_result} = \mathrm{XOR}[3] \lor \mathrm{XOR}[2] \lor \mathrm{XOR}[1] \lor \mathrm{XOR}[0]
+\end{aligned}
+$$
 
 #### Matriz de Comportamiento del LED RGB:
 | Condición Lógica | R (AND) | G (OR) | B (XOR) | Color Resultante | Interpretación Física |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| $A=0 \land B=0$ | 0 | 0 | 0 | **Apagado** | No hay ningún bit activo en el sistema. |
-| $A \neq B \land (A \ \& \ B = 0)$ | 0 | 1 | 1 | **Cyan** | Existen bits en '1' pero en posiciones distintas (presencia y diferencia, sin coincidencia). |
+| $A = 0 \land B = 0$ | 0 | 0 | 0 | **Apagado** | No hay ningún bit activo en el sistema. |
+| $A \neq B \land (A \land B = 0)$ | 0 | 1 | 1 | **Cyan** | Existen bits en '1' pero en posiciones distintas (presencia y diferencia, sin coincidencia). |
 | $A = B \land (A, B \neq 0)$ | 1 | 1 | 0 | **Amarillo** | Ambos operandos son idénticos y no nulos (coincidencia total, sin diferencia). |
-| $A \neq B \land (A \ \& \ B \neq 0)$ | 1 | 1 | 1 | **Blanco** | Coinciden en al menos un bit y difieren en otro (se activan todas las compuertas). |
+| $A \neq B \land (A \land B \neq 0)$ | 1 | 1 | 1 | **Blanco** | Coinciden en al menos un bit y difieren en otro (se activan todas las compuertas). |
 
-*Restricción matemática:* Debido a la relación booleana $A \lor B = (A \land B) \lor (A \oplus B)$, la activación de la compuerta AND o de la compuerta XOR fuerza de manera obligatoria la activación de la compuerta OR. Por esta razón, el canal Verde siempre acompaña al Rojo o al Azul, haciendo físicamente imposible obtener Rojo o Azul puro de forma aislada.
+*Restricción matemática:* Debido a la relación booleana fundamental $(A \lor B) = (A \land B) \lor (A \oplus B)$, la activación de la compuerta AND o de la compuerta XOR fuerza de manera obligatoria la activación de la compuerta OR. Por esta razón, el canal Verde siempre acompaña al Rojo o al Azul, haciendo físicamente imposible obtener Rojo o Azul puro de forma aislada.
 
 ---
 

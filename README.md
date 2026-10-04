@@ -9,7 +9,7 @@
 - Milton Nicolas Rincón Caicedo - 1021312724
 
 **Grupo de trabajo:**  
-**Semestre:** 2026-1
+**Semestre:** 2026-2
 
 ---
 

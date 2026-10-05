@@ -224,6 +224,16 @@ Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 1.  **Ingreso en Tiempo Real:** Cualquier cambio en los interruptores (`sw[3:0]`) modifica instantáneamente el operando $A$, actualizando en tiempo real tanto la suma/resta en los LEDs verdes como el estado lógico en el LED RGB.
 2.  **Almacenamiento:** El usuario ingresa un valor en `btn[3:0]`. Este valor no afecta al sistema hasta que se presiona `btn[5]`. Al presionarlo, en el siguiente flanco del reloj (cuestión de nanosegundos), el valor queda guardado en el registro `B_reg` del módulo top y pasa a ser el operando $B$ oficial.
 3.  **Selector de Operación:** El interruptor o botón asignado a `btn[4]` actúa como un selector de modo en tiempo real; en estado bajo (`0`) el sistema suma $A + B$, y en estado alto (`1`) el sistema resta $A - B$. Las operaciones lógicas en el LED RGB no se ven interrumpidas por este cambio, ya que se procesan en rutas de datos paralelas.
+
+
+
+#### Efecto del rebote mecánico
+Los pulsadores presentan rebote al ser presionados o liberados. En este diseño dicho efecto no altera el resultado. El boton `btn[5]` actúa con habilitación por nivel, por lo que los rebotes solo provocan que `B_reg` vuelva a capturar el mismo valor de `btn[3:0]`, y `btn[4]` selecciona la operación por nivel, por lo que un rebote solo genera una transición momentánea e imperceptible en los LEDs. En diseños donde cada pulsación deba contarse (como por ejemplo, alternar un bit), sería necesario implementar un filtro antirrebote y detección de flanco.
+
+
+
+
+
 ---
 
 ## Resultados
@@ -253,6 +263,13 @@ Sin embargo, los botones o interfaces referenciados en los esquemáticos como co
 Al intentar asignar una variable de Verilog (como `btn[4]` o `btn[5]`) a los pines físicos MIO50 o MIO51 en el archivo `.xdc`, la herramienta de síntesis (Vivado) arrojaba un error de mapeo, ya que el diseño RTL es "ciego" a los pines del procesador. 
 
 Es así como después de ese error, se modificó una parte del archivo de restricciones (`.xdc`).
+
+
+#### Conexión de los pulsadores externos
+Los pulsadores externos se conectaron a los pines 1 (V15) y 2 (W15) del puerto PMOD JC, asignados en el `.xdc` a `btn[4]` y `btn[5]`. Cada pulsador conecta el pin a 3.3 V al ser presionado. Para evitar que la entrada quede flotante cuando el pulsador está en reposo, se montó una resistencia de pull-down de [1k] Ω en la protoboard entre cada pin y tierra, de modo que la señal lee `0` en reposo y `1` al presionar.
+
+
+
 
 **Visualización botones, switches y leds en la FPGA:**
 

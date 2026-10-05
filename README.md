@@ -38,7 +38,7 @@ El sistema se divide en dos etapas principales:
 
 ### 2. Construcción y Manejo de Operandos
 
-Para garantizar un diseño no trivial y evaluar la totalidad de los 10 periféricos de entrada disponibles en la Zybo Z7, los operandos de 4 bits se forman mediante dos mecanismos complementarios:
+Para garantizar un diseño no trivial y evaluar la totalidad de las 10 entradas requeridas (4 switches y 4 botones de la Zybo Z7, más 2 pulsadores externos conectados por el PMOD JC, los operandos de 4 bits se forman mediante dos mecanismos complementarios:
 
 * **Operando $A$ (Entrada Directa / Asíncrona):**
   $$A[3:0] = \{ \text{SW}_3, \text{SW}_2, \text{SW}_1, \text{SW}_0 \}$$
@@ -131,7 +131,7 @@ $$
 
 #### Descripción del testbench
 
-El testbench fue diseñado para verificar el correcto funcionamiento del módulo principal (`top.v`) que a su vez instancia (`test_funcional.v`), insertando señales controladas que emulan la interacción del usuario con el hardware. Se configuró un reloj de 125 MHz y se programó una tarea repetitiva (`guardar_b`) que simula la pulsación del botón `btn[5]` para almacenar el operando $B$ en el registro. El código evalúa secuencialmente operaciones aritméticas (sumas y restas con operandos pequeños y grandes) y, posteriormente, inyecta casos específicos para validar la lógica del indicador de estado RGB. 
+El testbench fue diseñado para verificar el correcto funcionamiento del módulo principal `top.v`, que a su vez instancia `test_funcional.v`, insertando señales controladas que emulan la interacción del usuario con el hardware. Se configuró un reloj de 125 MHz y se programó una tarea repetitiva (`guardar_b`) que simula la pulsación del botón `btn[5]` para almacenar el operando $B$ en el registro. El código evalúa secuencialmente operaciones aritméticas (sumas y restas con operandos pequeños y grandes) y, posteriormente, inyecta casos específicos para validar la lógica del indicador de estado RGB. 
 
 A continuación, se detallan las evidencias de la simulación extraídas de GTKWave junto con su respectivo análisis.
 
@@ -209,7 +209,7 @@ top.v  (módulo top / wrapper)
   1.  Ejecución simultánea de las operaciones aritméticas (sumador/restador controlado por multiplexor) y compuertas lógicas bit a bit (AND, OR, XOR).
   2.  Resultado aritmético de 4 bits (`result`) y tres indicadores de 1 bit (`f_and`, `f_or`, `f_xor`) obtenidos mediante operadores de reducción.
 
-Esta separación entre la lógica combinacional (`test_funcional.v`) y los elementos de almacenamiento y conexión física (`top.v`) sirve como base para la ALU del siguiente laboratorio, en la cual se planea mantener  la ALU como módulo combinacional independiente y los registros de operandos fuera de ella, en el módulo superior.
+Esta separación entre la lógica combinacional (`test_funcional.v`) y los elementos de almacenamiento y conexión física (`top.v`) sirve como base para la ALU del siguiente laboratorio, en la cual se planea mantener la ALU como módulo combinacional independiente y los registros de operandos fuera de ella, en el módulo superior.
 
 
 
@@ -222,7 +222,7 @@ Esta separación entre la lógica combinacional (`test_funcional.v`) y los eleme
 
 Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 1.  **Ingreso en Tiempo Real:** Cualquier cambio en los interruptores (`sw[3:0]`) modifica instantáneamente el operando $A$, actualizando en tiempo real tanto la suma/resta en los LEDs verdes como el estado lógico en el LED RGB.
-2.  **Almacenamiento:** El usuario ingresa un valor en `btn[3:0]`. Este valor no afecta al sistema hasta que se presiona `btn[5]`. Al presionarlo, en el siguiente flanco del reloj (cuestión de nanosegundos), el valor queda guardado en el registro `B_reg `del módulo top y pasa a ser el operando $B$ oficial.
+2.  **Almacenamiento:** El usuario ingresa un valor en `btn[3:0]`. Este valor no afecta al sistema hasta que se presiona `btn[5]`. Al presionarlo, en el siguiente flanco del reloj (cuestión de nanosegundos), el valor queda guardado en el registro `B_reg` del módulo top y pasa a ser el operando $B$ oficial.
 3.  **Selector de Operación:** El interruptor o botón asignado a `btn[4]` actúa como un selector de modo en tiempo real; en estado bajo (`0`) el sistema suma $A + B$, y en estado alto (`1`) el sistema resta $A - B$. Las operaciones lógicas en el LED RGB no se ven interrumpidas por este cambio, ya que se procesan en rutas de datos paralelas.
 ---
 
@@ -263,7 +263,7 @@ Para corroborar los resultados de la simulación, se implementó el diseño en l
 *   **Círculo Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
 *   **Círculo Morado (Botón):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
 *   **Recuadro Celeste (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
-*   **Círculo Amarillo (LED RGB):** Es el `RGB_Led[2:0]`, funciona como indicador de estado lógico.
+*   **Círculo Amarillo (LED RGB):** Es el `Rgb_Led[2:0]`, funciona como indicador de estado lógico.
 *   **Círculo Verde:** Botones del procesador ARM (zona PS).
 
 

@@ -32,52 +32,7 @@ El sistema se divide en dos etapas principales:
 1. **Etapa de Adquisición y Almacenamiento (Secuencial):** Sincronizada a un reloj maestro de 125 MHz (`sys_clk_pin`), encargada de capturar y retener el valor del operando $B$ cuando el usuario activa la señal de escritura (`btn[5]`).
 2. **Etapa de Procesamiento Lógico-Aritmético (Combinacional):** Procesa en paralelo el operando directo $A$ y el operando almacenado $B$, ejecutando simultáneamente una operación aritmética de 4 bits (suma o resta seleccionable) y tres operaciones booleanas bit a bit (AND, OR, XOR).
 
-```mermaid
-graph LR
-    %% Entradas
-    subgraph Entradas
-        SW["sw[3:0]<br/>(Switches)"]
-        BTN_D["btn[3:0]<br/>(Botones B)"]
-        BTN_SAVE["btn[5]<br/>(PMOD JC.2 / Guardar)"]
-        CLK["clk<br/>(125 MHz)"]
-        BTN_MODE["btn[4]<br/>(PMOD JC.1 / Suma-Resta)"]
-    end
-
-    %% Registro
-    subgraph Memoria
-        B_REG["Registro B_reg [3:0]<br/>(Captura síncrona)"]
-    end
-
-    %% ALU
-    subgraph ALU ["ALU Paralela"]
-        ARITH["Módulo Aritmético<br/>(A + B) / (A - B)"]
-        LOGIC["Módulo Lógico<br/>AND, OR, XOR<br/>+ Reducción OR"]
-    end
-
-    %% Salidas
-    subgraph Salidas
-        LED["led[3:0]<br/>(4 LEDs Verdes)"]
-        RGB["rgb_led[2:0]<br/>(LED RGB LD6)"]
-    end
-
-    %% Conexiones Operando A
-    SW -->|Operando A| ARITH
-    SW -->|Operando A| LOGIC
-
-    %% Conexiones Operando B
-    BTN_D -->|Dato D| B_REG
-    BTN_SAVE -->|Write Enable| B_REG
-    CLK -->|Reloj| B_REG
-    B_REG -->|Operando B| ARITH
-    B_REG -->|Operando B| LOGIC
-
-    %% Control
-    BTN_MODE -->|0: Suma / 1: Resta| ARITH
-
-    %% Salidas
-    ARITH -->|Resultado Aritmético| LED
-    LOGIC -->|R=AND, G=OR, B=XOR| RGB
-```
+![Diagrama de Arquitectura y Bloques del Sistema](doc/diagrama_bloques.svg)
 
 
 ### 2. Construcción y Manejo de Operandos

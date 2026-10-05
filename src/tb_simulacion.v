@@ -10,7 +10,7 @@ wire [3:0] led;
 wire [2:0] rgb_led;
 
 // Instancia del módulo Top
-top_alu DUT (
+top DUT (
     .clk(clk),
     .sw(sw),
     .btn(btn),
@@ -33,7 +33,7 @@ task guardar_b;
 endtask
 
 initial begin
-    $dumpfile("simulacion_alu.vcd"); 
+    $dumpfile("simulacion_test_funcional.vcd"); 
     $dumpvars(0, tb_simulacion);
 
     // Estado inicial
@@ -42,9 +42,8 @@ initial begin
     btn = 6'b000000;
     #20;
 
-    // ==========================================
     // PRUEBAS ARITMÉTICAS
-    // ==========================================
+   
     
     // 1. Suma base: 2 + 1
     sw = 4'd2;           // A = 2
@@ -74,10 +73,10 @@ initial begin
     guardar_b();
     #20;
 
-    // ==========================================
+   
     // PRUEBAS DE ESTADOS LÓGICOS (LED RGB)
-    // ==========================================
-    btn[4] = 0; // Regresamos a modo suma para no afectar visualmente
+
+    btn[4] = 0; // Regresamos a modo suma
     
     // 5. Caso RGB 000 (Apagado)
     sw = 4'd0; btn[3:0] = 4'd0; guardar_b(); #20;

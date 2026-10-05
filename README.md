@@ -26,7 +26,8 @@
 ## Diseño implementado
 
 ### 1. Tipo de Sistema y Arquitectura General
-El diseño corresponde a una **arquitectura de Datapath Secuencial con Registro de Carga Habilitada acoplado a una Unidad Lógico-Aritmética (ALU) Combinacional Paralela**. No requiere una Máquina de Estados Finitos (FSM) multi-estado, ya que el control del flujo se realiza mediante una celda de memoria síncrona (registro de captura con señal de *Enable*) y rutas de datos combinacionales concurrentes.
+El diseño corresponde a una arquitectura de Datapath Secuencial con Registro de Carga Habilitada. No requiere una Máquina de Estados Finitos (FSM) multi-estado, ya que el control del flujo se realiza mediante una celda de memoria síncrona (registro de captura con señal de *Enable*) y rutas de datos combinacionales concurrentes.
+
 
 El sistema se divide en dos etapas principales:
 1. **Etapa de Adquisición y Almacenamiento (Secuencial):** Sincronizada a un reloj maestro de 125 MHz (`sys_clk_pin`), encargada de capturar y retener el valor del operando $B$ cuando el usuario activa la señal de escritura (`btn[5]`).
@@ -41,18 +42,19 @@ Para garantizar un diseño no trivial y evaluar la totalidad de los 10 periféri
 
 * **Operando $A$ (Entrada Directa / Asíncrona):**
   $$A[3:0] = \{ \text{SW}_3, \text{SW}_2, \text{SW}_1, \text{SW}_0 \}$$
-  Se mapea directamente a los interruptores deslizantes (`sw[3:0]`). Cualquier cambio físico en los switches se refleja de manera inmediata en la ALU combinacional sin depender del reloj del sistema.
+  Se mapea directamente a los interruptores deslizantes (`sw[3:0]`). Cualquier cambio físico en los switches se refleja de manera inmediata en la lógica combinacional sin depender del reloj del sistema.
 
 * **Operando B (Entrada Registrada / Síncrona):**
   `B[3:0] = B_reg[3:0]`  
   Los botones físicos de la placa (`btn[3:0]`) permiten seleccionar el dato temporal para $B$. Para evitar que el valor se pierda al soltar los pulsadores, se implementó un registro síncrono de 4 bits (`B_reg`). El dato se almacena en memoria únicamente cuando ocurre un flanco de subida de `clk` y se presiona el botón externo `btn[5]` (PMOD JC, Pin 2), actuando como señal de *Write Enable*:
+  
   ```verilog
   always @(posedge clk) begin
       if (btn[5]) begin
           B_reg <= btn[3:0];
       end
   end
-
+   ```
 ---
 
 ### 3. Operaciones Aritméticas y Control (LEDs Verdes)
@@ -129,7 +131,7 @@ $$
 
 #### Descripción del testbench
 
-El testbench fue diseñado para verificar el correcto funcionamiento del módulo principal (`top_alu.v`) insertando señales controladas que emulan la interacción del usuario con el hardware. Se configuró un reloj de 125 MHz y se programó una tarea repetitiva (`guardar_b`) que simula la pulsación del botón `btn[5]` para almacenar el operando $B$ en el registro. El código evalúa secuencialmente operaciones aritméticas (sumas y restas con operandos pequeños y grandes) y, posteriormente, inyecta casos específicos para validar la lógica del indicador de estado RGB. 
+El testbench fue diseñado para verificar el correcto funcionamiento del módulo principal (`top.v`) que a su vez instancia (`test_funcional.v`), insertando señales controladas que emulan la interacción del usuario con el hardware. Se configuró un reloj de 125 MHz y se programó una tarea repetitiva (`guardar_b`) que simula la pulsación del botón `btn[5]` para almacenar el operando $B$ en el registro. El código evalúa secuencialmente operaciones aritméticas (sumas y restas con operandos pequeños y grandes) y, posteriormente, inyecta casos específicos para validar la lógica del indicador de estado RGB. 
 
 A continuación, se detallan las evidencias de la simulación extraídas de GTKWave junto con su respectivo análisis.
 
@@ -188,23 +190,39 @@ Se buscó representar el encendido de los colores considerando la restricción m
 
 ## Implementación del Diseño en Verilog
 
-### Organización del Código
-El diseño de la ALU se estructuró en un único módulo (`top_alu.v`) siguiendo una arquitectura de flujo de datos híbrida (combinacional y secuencial). El código se divide en las siguientes etapas lógicas:
-1.  **Enrutamiento de Entradas:** Asignación directa de los interruptores físicos (`sw[3:0]`) al operando $A$.
-2.  **Lógica Secuencial (Memoria):** Implementación de un registro de 4 bits (`B_reg`) para almacenar el operando $B$ proveniente de la botonera.
-3.  **Lógica Combinacional Paralela:** Ejecución simultánea e ininterrumpida de las operaciones aritméticas (sumador/restador controlado por multiplexor) y compuertas lógicas bit a bit (AND, OR, XOR).
-4.  **Asignación de Salidas:** Enrutamiento de los resultados a los periféricos físicos de la placa (LEDs verdes para aritmética y LED RGB mediante operadores de reducción para el estado lógico).
 
-### Manejo de Reloj y Reset
+### Organización del Código
+El diseño se estructuró en dos módulos jerárquicos, separando la lógica secuencial (memoria) de la lógica combinacional:
+
+```
+top.v  (módulo top / wrapper)
+ └── test_funcional.v  (lógica combinacional, instancia u_test)
+```
+
+* **`top.v`:** es el módulo top del proyecto y el único conectado a los pines físicos de la tarjeta mediante el archivo `Zybo-Z7.xdc`. Se encarga de:
+  1.  Asignación directa de los interruptores físicos (`sw[3:0]`) al operando $A$.
+  2.  Implementación de un registro de 4 bits (`B_reg`) para almacenar el operando $B$ proveniente de los botones BTN0 a BTN3 de la tarjeta (`btn[3:0]`).
+  3.  Conecta $A$, `B_reg` y el selector `btn[4]` a las entradas de `test_funcional`, y sus salidas directamente a los LEDs verdes y al LED RGB.
+     
+* **`test_funcional.v`:** sus salidas dependen únicamente de los valores actuales de sus entradas. Se encarga de:
+  
+  1.  Ejecución simultánea de las operaciones aritméticas (sumador/restador controlado por multiplexor) y compuertas lógicas bit a bit (AND, OR, XOR).
+  2.  Resultado aritmético de 4 bits (`result`) y tres indicadores de 1 bit (`f_and`, `f_or`, `f_xor`) obtenidos mediante operadores de reducción.
+
+Esta separación entre la lógica combinacional (`test_funcional.v`) y los elementos de almacenamiento y conexión física (`top.v`) sirve como base para la ALU del siguiente laboratorio, en la cual se planea mantener  la ALU como módulo combinacional independiente y los registros de operandos fuera de ella, en el módulo superior.
+
+
+
+### Reloj y Reset
 
 *   **Señal de Reloj (Clock):** El sistema utiliza el oscilador interno de la tarjeta Zybo Z7, el cual ingresa por el pin K17 a una frecuencia de 125 MHz. Esta señal de reloj (`clk`) se utiliza exclusivamente para sincronizar el bloque secuencial del registro $B$. La captura de datos se realiza por flanco de subida (`posedge clk`) condicionado a la habilitación (enable) del botón `btn[5]`.
-*   **Manejo de Reset:** El diseño optó por prescindir de un reset asíncrono o síncrono mapeado a un botón físico. En su lugar, se implementó un **Power-on Reset (POR)** mediante la inicialización directa en la declaración del registro (`reg [3:0] B_reg = 4'b0000;`). Esto garantiza que, al cargar el *bitstream* en la FPGA, la memoria arranque en un estado seguro y conocido (cero).
+*   **Reset:** Se implementó un **Power-on Reset (POR)** mediante la inicialización directa en la declaración del registro (`reg [3:0] B_reg = 4'b0000;`). Esto nos permite que, al cargar el *bitstream* en la FPGA, la memoria arranque en un estado seguro y conocido (cero).
 
 ### Comportamiento Esperado del Sistema
 
 Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 1.  **Ingreso en Tiempo Real:** Cualquier cambio en los interruptores (`sw[3:0]`) modifica instantáneamente el operando $A$, actualizando en tiempo real tanto la suma/resta en los LEDs verdes como el estado lógico en el LED RGB.
-2.  **Almacenamiento en Demanda:** El usuario ingresa un valor en `btn[3:0]`. Este valor no afecta al sistema hasta que se presiona `btn[5]`. Al presionarlo, en el siguiente flanco del reloj (cuestión de nanosegundos), el valor queda guardado en la memoria interna de la ALU y pasa a ser el operando $B$ oficial.
+2.  **Almacenamiento:** El usuario ingresa un valor en `btn[3:0]`. Este valor no afecta al sistema hasta que se presiona `btn[5]`. Al presionarlo, en el siguiente flanco del reloj (cuestión de nanosegundos), el valor queda guardado en el registro `B_reg `del módulo top y pasa a ser el operando $B$ oficial.
 3.  **Selector de Operación:** El interruptor o botón asignado a `btn[4]` actúa como un selector de modo en tiempo real; en estado bajo (`0`) el sistema suma $A + B$, y en estado alto (`1`) el sistema resta $A - B$. Las operaciones lógicas en el LED RGB no se ven interrumpidas por este cambio, ya que se procesan en rutas de datos paralelas.
 ---
 
@@ -281,7 +299,7 @@ Para esta prueba, se cambió el operando de los interruptores a $A=2$ (`0010`) m
 ![Suma_2](doc/Suma2.jpeg)
 
 #### 5. Operación de Resta ($A=2, B=1$)
-Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), se mantuvo presionado el botón rojo `btn[4]` para cambiar el modo de la ALU a resta. El resultado aritmético cambió instantáneamente para mostrar la resta matemática ($2 - 1 = 1$), encendiendo únicamente el primer LED verde. Cabe destacar que el indicador RGB se mantuvo en **Cyan**, demostrando físicamente que las compuertas lógicas operan en paralelo y evalúan los operandos de entrada independientemente de si la operación seleccionada es suma o resta.
+Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), se mantuvo presionado el botón rojo `btn[4]` para cambiar el modo de operación a resta. El resultado aritmético cambió instantáneamente para mostrar la resta matemática ($2 - 1 = 1$), encendiendo únicamente el primer LED verde. Cabe destacar que el indicador RGB se mantuvo en **Cyan**, demostrando físicamente que las compuertas lógicas operan en paralelo y evalúan los operandos de entrada independientemente de si la operación seleccionada es suma o resta.
 
 ![Resta](doc/Resta.jpeg)
 

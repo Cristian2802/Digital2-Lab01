@@ -332,7 +332,7 @@ Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), 
 
 - Separar el diseño en un módulo top (`top.v`), encargado de la conexión con los pines y del registro `B_reg`, y un módulo puramente combinacional (`test_funcional.v`), encargado de las operaciones, permitió distinguir claramente la lógica secuencial (memoria) de la lógica combinacional. Esta organización modular facilita reutilizar el diseño como base para la ALU del siguiente laboratorio.
 
--  - La implementación del indicador RGB permitió aplicar el operador de reducción (`|`) para condensar el resultado de 4 bits de cada compuerta (AND, OR y XOR) en un único canal del LED RGB. Además, se identificó que, debido a la relación $A \lor B = (A \land B) \lor (A \oplus B)$, solo son posibles cuatro combinaciones de color (apagado, cian, amarillo y blanco).
+- La implementación del indicador RGB permitió aplicar el operador de reducción (`|`) para condensar el resultado de 4 bits de cada compuerta (AND, OR y XOR) en un único canal del LED RGB. Además, se identificó que, debido a la relación $A \lor B = (A \land B) \lor (A \oplus B)$, solo son posibles cuatro combinaciones de color (apagado, cian, amarillo y blanco).
 ---
 
 ## Referencias

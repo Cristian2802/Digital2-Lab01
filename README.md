@@ -266,7 +266,7 @@ Es así como después de ese error, se modificó una parte del archivo de restri
 
 
 #### Conexión de los pulsadores externos
-Los pulsadores externos se conectaron a los pines 1 (V15) y 2 (W15) del puerto PMOD JC, asignados en el `.xdc` a `btn[4]` y `btn[5]`. Cada pulsador conecta el pin a 3.3 V al ser presionado. Para evitar que la entrada quede flotante cuando el pulsador está en reposo, se montó una resistencia de pull-down de [1k] Ω en la protoboard entre cada pin y tierra, de modo que la señal lee `0` en reposo y `1` al presionar.
+Los pulsadores externos se conectaron a los pines 1 (V15) y 2 (W15) del puerto PMOD JC, asignados en el `.xdc` a `btn[4]` y `btn[5]`. Cada pulsador conecta el pin a 3.3 V al ser presionado. Para evitar que la entrada quede flotante cuando el pulsador está en reposo, se montó una resistencia de pull-down de 1k Ω en la protoboard entre cada pin y tierra, de modo que la señal lee `0` en reposo y `1` al presionar.
 
 
 
@@ -324,15 +324,15 @@ Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), 
 
 ## Conclusiones
 
-- A través de esta práctica se logró comprender el flujo de trabajo en *Vivado* para diseñar e implementar circuitos en la FPGA *Zybo Z7*. El circuito desarrollado permitió comprobar el funcionamiento de los interruptores, botones y LEDs de la tarjeta. Este código será útil en futuros laboratorios para verificar que los componentes funcionen correctamente antes de realizar diseños más complejos.
+- A través de esta práctica se logró comprender el flujo de trabajo en *Vivado* para diseñar e implementar circuitos en la FPGA *Zybo Z7*. El circuito desarrollado permitió comprobar el funcionamiento de los interruptores, botones y LEDs de la tarjeta. Este diseño será útil en futuros laboratorios para verificar que los componentes funcionen correctamente antes de realizar diseños más complejos.
 
-- Se identificó una limitación de la arquitectura Zynq-7000: no todos los botones de la tarjeta se pueden utilizar directamente en diseños de hardware en Verilog. Para esta práctica, se utilizaron los 4 interruptores (`SW0-SW3`) y los botones `BTN0-BTN3`, que están conectados a la Lógica Programable (PL). Para agregar más entradas, se pueden utilizar los puertos de expansión PMOD o cambiar las funciones de los interruptores disponibles. Esto debido a que los botones `BTN4 y BTN5` están asociados exclusivamente al procesador.
+- Se comprobó la importancia del archivo de restricciones (`.xdc`).Un diseño correcto en Verilog no funciona en hardware si sus puertos no están asignados a los pines físicos adecuados. Además, se identificó una limitación de la arquitectura Zynq-7000: los botones `BTN4` y `BTN5` están conectados exclusivamente al procesador (PS) a través de los pines MIO, por lo que no pueden asignarse a un diseño en la lógica programable (PL). Para completar las seis entradas de botón requeridas, se conectaron dos pulsadores externos al puerto PMOD JC, junto con los botones `BTN0-BTN3` y los interruptores `SW0-SW3`.
 
-- La simulación con *GTKWave* fue de gran ayuda para comprobar el comportamiento de las señales antes de implementar el diseño en la FPGA. Esto permitió detectar posibles errores y verificar que las operaciones funcionaran como se esperaba, facilitando las pruebas posteriores en la tarjeta física. Reduciendo los tiempos para hacer pruebas repetitivas y redundantes.
+- La simulación con Icarus Verilog y la visualización de las formas de onda en GTKWave permitieron comprobar el comportamiento de las señales antes de implementar el diseño en la FPGA. Esto facilitó la detección de posibles errores y redujo el número de pruebas necesarias sobre la tarjeta física.
 
-- Durante la práctica se comprendió que, a diferencia de un programa convencional, en Verilog varias operaciones pueden ejecutarse al mismo tiempo. Se comprobó que las operaciones de suma y resta y la lógica que controla los LEDs RGB funcionan de manera simultánea, sin que una interfiera con la otra.
+- Separar el diseño en un módulo top (`top.v`), encargado de la conexión con los pines y del registro `B_reg`, y un módulo puramente combinacional (`test_funcional.v`), encargado de las operaciones, permitió distinguir claramente la lógica secuencial (memoria) de la lógica combinacional. Esta organización modular facilita reutilizar el diseño como base para la ALU del siguiente laboratorio.
 
-- La implementación del indicador RGB permitió comprender mejor la diferencia entre las operaciones aritméticas y las operaciones lógicas. Mediante compuertas como AND, OR y XOR, se pudo utilizar la información de varios bits para controlar un solo color del LED. Esto permitió aprender cómo representar condiciones lógicas mediante indicadores visuales en un circuito digital.
+-  El operador de reducción (`|`) permitió condensar el resultado de 4 bits de cada compuerta (AND, OR y XOR) en un único canal del LED. Además, se identificó que, debido a la relación $A \lor B = (A \land B) \lor (A \oplus B)$, solo son posibles cuatro combinaciones de color (apagado, cian, amarillo y blanco).
 ---
 
 ## Referencias

@@ -155,13 +155,13 @@ Para la explicación de los resultados obtenidos del `tb_simulacion.v`, en la si
 A continuación, se detalla el comportamiento del circuito en cada zona temporal de la simulación:
 
 *   **Zona 1:** Estado inicial de reposo. No se ha modificado ninguna señal.
-*   **Zona 2:** El operando $A$ toma el valor de 2 y $B$ toma el valor de 1 en los interruptores. Sin embargo, como no se ha presionado el botón de guardado (`btn[5]`), el registro interno de $B$ sigue siendo 0. Por lo tanto, la suma (`led[3:0]`) es igual a 2 ($2 + 0$).
+*   **Zona 2:** El operando $A$ toma el valor de 2 en los interruptores y $B$ toma el valor de 1 en los botones btn[3:0]. Sin embargo, como no se ha presionado el botón de guardado (`btn[5]`), el registro interno de $B$ sigue siendo 0. Por lo tanto, la suma (`led[3:0]`) es igual a 2 ($2 + 0$).
 *   **Zona 3:** Se presiona el `btn[5]`, actualizando el registro de $B$ con el valor 1. Se efectúa la suma, dando como resultado 3 en `led[3:0]` ($2 + 1 = 3$).
 *   **Zona 4:** Se activa el `btn[4]` (modo resta). El resultado en `led[3:0]` cambia a 1 ($2 - 1 = 1$).
-*   **Zona 5:** El operando $A$ toma el valor de 10 y $B$ el valor de 5 en los interruptores. Al no haberse presionado `btn[5]`, el registro conserva el 1 anterior y el modo de operación vuelve a suma. El resultado en `led[3:0]` toma el valor de 11 ($10 + 1 = 11$).
+*   **Zona 5:** El operando $A$ toma el valor de 10 en los interruptores y $B$ el valor de 5 en los botones. Al no haberse presionado `btn[5]`, el registro conserva el 1 anterior y el modo de operación vuelve a suma. El resultado en `led[3:0]` toma el valor de 11 ($10 + 1 = 11$).
 *   **Zona 6:** Se presiona el `btn[5]` y se guarda el 5 en el registro de $B$. Se efectúa la suma dando como resultado 15 en `led[3:0]` ($10 + 5 = 15$). Esta operación verifica que los 4 LEDs verdes de la suma funcionan correctamente al encenderse todos a la vez.
 *   **Zona 7:** El operando $A$ toma el valor de 12 y $B$ permanece con el valor de 5. Se activa el `btn[4]` (resta), por lo que la salida `led[3:0]` toma el valor de 7 ($12 - 5 = 7$).
-*   **Zona 8:** El operando $B$ cambia de valor a 4 en los interruptores y se guarda en el registro. Como permanece activo el `btn[4]` (resta), el resultado en `led[3:0]` toma el valor de 8 ($12 - 4 = 8$).
+*   **Zona 8:** El operando $B$ cambia de valor a 4 en los botones y se guarda en el registro. Como permanece activo el `btn[4]` (resta), el resultado en `led[3:0]` toma el valor de 8 ($12 - 4 = 8$).
 *   **Zona 9:** El operando $A$ cambia de valor a 0 preparándose para la validación de la lógica RGB.
 *   **Zona 10:** Los operandos $A$ y $B$ son cero. Al no haber bits activos, las compuertas lógicas arrojan cero y el LED RGB está totalmente apagado (Estado 000).
 *   **Zona 11:** El operando $A$ cambia a 1 y $B$ se actualiza a 2. Al tener bits activos en posiciones distintas (0001 y 0010), se detecta presencia (OR) y diferencia (XOR), pero no coincidencia (AND). Esto enciende el LED Verde y el Azul (Cyan: 011).
@@ -228,7 +228,7 @@ Al operar físicamente la FPGA, el sistema responde de la siguiente manera:
 
 
 #### Efecto del rebote mecánico
-Los pulsadores presentan rebote al ser presionados o liberados. En este diseño dicho efecto no altera el resultado. El boton `btn[5]` actúa con habilitación por nivel, por lo que los rebotes solo provocan que `B_reg` vuelva a capturar el mismo valor de `btn[3:0]`, y `btn[4]` selecciona la operación por nivel, por lo que un rebote solo genera una transición momentánea e imperceptible en los LEDs. En diseños donde cada pulsación deba contarse (como por ejemplo, alternar un bit), sería necesario implementar un filtro antirrebote y detección de flanco.
+Los pulsadores presentan rebote al ser presionados o liberados. En este diseño dicho efecto no altera el resultado. El botón `btn[5]` actúa con habilitación por nivel, por lo que los rebotes solo provocan que `B_reg` vuelva a capturar el mismo valor de `btn[3:0]`, y `btn[4]` selecciona la operación por nivel, por lo que un rebote solo genera una transición momentánea e imperceptible en los LEDs. En diseños donde cada pulsación deba contarse (como por ejemplo, alternar un bit), sería necesario implementar un filtro antirrebote y detección de flanco.
 
 
 
@@ -280,7 +280,7 @@ Para corroborar los resultados de la simulación, se implementó el diseño en l
 *   **Círculo Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
 *   **Círculo Morado (Botón):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
 *   **Recuadro Celeste (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
-*   **Círculo Amarillo (LED RGB):** Es el `rgb_Led[2:0]`, funciona como indicador de estado lógico.
+*   **Círculo Amarillo (LED RGB):** Es el `rgb_led[2:0]`, funciona como indicador de estado lógico.
 *   **Círculo Verde:** Botones del procesador ARM (zona PS).
 
 
@@ -326,7 +326,7 @@ Finalmente, conservando exactamente los mismos valores anteriores ($A=2, B=1$), 
 
 - A través de esta práctica se logró comprender el flujo de trabajo en *Vivado* para diseñar e implementar circuitos en la FPGA *Zybo Z7*. El circuito desarrollado permitió comprobar el funcionamiento de los interruptores, botones y LEDs de la tarjeta. Este diseño será útil en futuros laboratorios para verificar que los componentes funcionen correctamente antes de realizar diseños más complejos.
 
-- Se comprobó la importancia del archivo de restricciones (`.xdc`).Un diseño correcto en Verilog no funciona en hardware si sus puertos no están asignados a los pines físicos adecuados. Además, se identificó una limitación de la arquitectura Zynq-7000: los botones `BTN4` y `BTN5` están conectados exclusivamente al procesador (PS) a través de los pines MIO, por lo que no pueden asignarse a un diseño en la lógica programable (PL). Para completar las seis entradas de botón requeridas, se conectaron dos pulsadores externos al puerto PMOD JC, junto con los botones `BTN0-BTN3` y los interruptores `SW0-SW3`.
+- Se comprobó la importancia del archivo de restricciones (`.xdc`). Un diseño correcto en Verilog no funciona en hardware si sus puertos no están asignados a los pines físicos adecuados. Además, se identificó una limitación de la arquitectura Zynq-7000: los botones `BTN4` y `BTN5` están conectados exclusivamente al procesador (PS) a través de los pines MIO, por lo que no pueden asignarse a un diseño en la lógica programable (PL). Para completar las seis entradas de botón requeridas, se conectaron dos pulsadores externos al puerto PMOD JC, junto con los botones `BTN0-BTN3` y los interruptores `SW0-SW3`.
 
 - La simulación con Icarus Verilog y la visualización de las formas de onda en GTKWave permitieron comprobar el comportamiento de las señales antes de implementar el diseño en la FPGA. Esto facilitó la detección de posibles errores y redujo el número de pruebas necesarias sobre la tarjeta física.
 

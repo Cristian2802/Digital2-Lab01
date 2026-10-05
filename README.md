@@ -38,7 +38,7 @@ El sistema se divide en dos etapas principales:
 
 ### 2. Construcción y Manejo de Operandos
 
-Para garantizar un diseño no trivial y evaluar la totalidad de las 10 entradas requeridas (4 switches y 4 botones de la Zybo Z7, más 2 pulsadores externos conectados por el PMOD JC, los operandos de 4 bits se forman mediante dos mecanismos complementarios:
+Para garantizar un diseño no trivial y evaluar la totalidad de las 10 entradas requeridas (4 switches y 4 botones de la Zybo Z7, más 2 pulsadores externos conectados por el PMOD JC), los operandos de 4 bits se forman mediante dos mecanismos complementarios:
 
 * **Operando $A$ (Entrada Directa / Asíncrona):**
   $$A[3:0] = \{ \text{SW}_3, \text{SW}_2, \text{SW}_1, \text{SW}_0 \}$$
@@ -266,7 +266,7 @@ Es así como después de ese error, se modificó una parte del archivo de restri
 
 
 #### Conexión de los pulsadores externos
-Los pulsadores externos se conectaron a los pines 1 (V15) y 2 (W15) del puerto PMOD JC, asignados en el `.xdc` a `btn[4]` y `btn[5]`. Cada pulsador conecta el pin a 3.3 V al ser presionado. Para evitar que la entrada quede flotante cuando el pulsador está en reposo, se montó una resistencia de pull-down de 1k Ω en la protoboard entre cada pin y tierra, de modo que la señal lee `0` en reposo y `1` al presionar.
+Los pulsadores externos se conectaron a los pines 1 (V15) y 2 (W15) del puerto PMOD JC, asignados en el `.xdc` a `btn[4]` y `btn[5]`. Cada pulsador conecta el pin a 3.3 V al ser presionado. Para evitar que la entrada quede flotante cuando el pulsador está en reposo, se montó una resistencia de pull-down de 1k Ω en la protoboard entre cada pin y tierra, de modo que la señal lee `0` en reposo y `1` al presionar. Adicionalmente, en el `.xdc` se habilitó la resistencia de pull-down interna de la FPGA (`PULLDOWN true`) como respaldo, como ambas resistencias quedan en paralelo, no interfieren entre sí.
 
 
 
@@ -280,7 +280,7 @@ Para corroborar los resultados de la simulación, se implementó el diseño en l
 *   **Círculo Rojo (Botón):** Representa el `btn[4]`. Funciona como selector de operación; si no se presiona (`btn[4]=0`) el sistema suma, y si se mantiene presionado (`btn[4]=1`) el sistema resta.
 *   **Círculo Morado (Botón):** Es el `btn[5]`. Cada vez que se presiona, registra y guarda en la memoria el número que se esté ingresando en ese momento en los botones $B$.
 *   **Recuadro Celeste (LEDs):** Son los 4 LEDs de color verde (`led[3:0]`) que dejan ver el resultado aritmético de la suma o la resta en formato binario.
-*   **Círculo Amarillo (LED RGB):** Es el `Rgb_Led[2:0]`, funciona como indicador de estado lógico.
+*   **Círculo Amarillo (LED RGB):** Es el `rgb_Led[2:0]`, funciona como indicador de estado lógico.
 *   **Círculo Verde:** Botones del procesador ARM (zona PS).
 
 

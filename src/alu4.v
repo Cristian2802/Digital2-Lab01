@@ -1,5 +1,4 @@
-// ALU de 4 bits: módulo puramente combinacional (sin reloj ni memoria)
-module alu4 (
+module test_funcional (
     input  wire [3:0] A,        // Operando A (switches)
     input  wire [3:0] B,        // Operando B (registro B_reg)
     input  wire       resta,    // Selector: 0 = Suma, 1 = Resta
